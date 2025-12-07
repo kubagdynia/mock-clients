@@ -1,0 +1,232 @@
+<div class="choose-client-container">
+  <h1>Wybierz Klienta</h1>
+
+  @if (isLoading()) {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Ładowanie danych...</p>
+  </div>
+  }
+
+  <div class="actions">
+    <button
+      class="btn btn-dev"
+      (click)="toggleDevPanel()"
+      [disabled]="isLoading()"
+    >
+      🛠️ Dev Panel
+    </button>
+  </div>
+
+  @if (showDevPanel) {
+  <div class="dev-panel">
+    <h3>🔧 Panel Deweloperski</h3>
+
+    <div class="mock-status">
+      <label class="switch">
+        <input
+          type="checkbox"
+          [checked]="mockEnabled()"
+          (change)="toggleMockEnabled()"
+        />
+        <span class="slider"></span>
+      </label>
+      <span class="mock-info">
+        Tryb MOCK:
+        <strong>{{ mockEnabled() ? 'Włączony' : 'Wyłączony' }}</strong>
+        @if (!mockEnabled()) {
+        <span class="mock-warning">⚠️ Backend wymagany</span>
+        }
+      </span>
+    </div>
+
+    <div class="dev-actions">
+      <button
+        class="btn btn-secondary"
+        (click)="downloadData()"
+        [disabled]="isLoading() || !mockEnabled()"
+      >
+        📅 Pobierz dane (JSON)
+      </button>
+      <label
+        class="btn btn-secondary"
+        for="file-upload"
+        [class.disabled]="isLoading() || !mockEnabled()"
+      >
+        📤 Wczytaj dane (JSON)
+      </label>
+      <input
+        id="file-upload"
+        type="file"
+        accept=".json"
+        (change)="onFileSelected($event)"
+        style="display: none"
+        [disabled]="isLoading() || !mockEnabled()"
+      />
+      <button
+        class="btn btn-danger"
+        (click)="clearAllData()"
+        [disabled]="isLoading() || !mockEnabled()"
+      >
+        🗑️ Wyczyść dane
+      </button>
+      <button
+        class="btn btn-warning"
+        (click)="resetToMock()"
+        [disabled]="isLoading() || !mockEnabled()"
+      >
+        🔄 Przywróć mocka
+      </button>
+      <button
+        class="btn btn-info"
+        (click)="toggleRawJson()"
+        [disabled]="isLoading() || !mockEnabled()"
+      >
+        {{ showRawJson ? '🔼 Ukryj JSON' : '🔽 Pokaż raw JSON' }}
+      </button>
+    </div>
+
+    @if (showRawJson) {
+    <div class="json-viewer">
+      <div class="json-header">
+        <span>Raw JSON Data {{ isEditingJson ? '(Edycja)' : '' }}</span>
+        <div class="json-actions">
+          @if (!isEditingJson) {
+          <button
+            class="btn btn-edit"
+            (click)="enableJsonEdit()"
+            [disabled]="isLoading() || !mockEnabled()"
+          >
+            ✏️ Edytuj
+          </button>
+          <button
+            class="btn btn-copy"
+            (click)="copyToClipboard()"
+            [disabled]="!mockEnabled()"
+          >
+            📋 Kopiuj
+          </button>
+          } @else {
+          <button
+            class="btn btn-success"
+            (click)="saveJsonData()"
+            [disabled]="isLoading() || !mockEnabled()"
+          >
+            ✓ Zapisz
+          </button>
+          <button
+            class="btn btn-cancel"
+            (click)="cancelJsonEdit()"
+            [disabled]="isLoading() || !mockEnabled()"
+          >
+            ✗ Anuluj
+          </button>
+          }
+        </div>
+      </div>
+      @if (!isEditingJson) {
+      <pre class="json-content">{{ rawJsonData }}</pre>
+      } @else {
+      <textarea
+        class="json-editor"
+        [(ngModel)]="editedJsonData"
+        [disabled]="isLoading() || !mockEnabled()"
+        spellcheck="false"
+      ></textarea>
+      }
+    </div>
+    }
+
+    <div class="delay-status">
+      <label class="switch">
+        <input
+          type="checkbox"
+          [checked]="delayEnabled()"
+          (change)="toggleDelayEnabled()"
+          [disabled]="!mockEnabled()"
+        />
+        <span class="slider"></span>
+      </label>
+      <span class="delay-info">
+        Opóźnienia:
+        <strong>{{ delayEnabled() ? 'Włączone' : 'Wyłączone' }}</strong>
+        @if (delayEnabled()) {
+        <span class="delay-range">({{ delayMin() }}-{{ delayMax() }}ms)</span>
+        }
+      </span>
+      <button
+        class="btn btn-config"
+        (click)="toggleDelayConfig()"
+        [disabled]="isLoading() || !mockEnabled()"
+      >
+        ⚙️ Konfiguruj opóźnienie
+      </button>
+    </div>
+
+    @if (showDelayConfig) {
+    <div class="delay-config">
+      <h4>Konfiguracja opóźnienia</h4>
+      <div class="delay-inputs">
+        <div class="input-group">
+          <label for="delay-min">Min (ms):</label>
+          <input
+            id="delay-min"
+            type="number"
+            [(ngModel)]="tempDelayMin"
+            min="0"
+            step="50"
+            class="delay-input"
+            [disabled]="!mockEnabled()"
+          />
+        </div>
+        <div class="input-group">
+          <label for="delay-max">Max (ms):</label>
+          <input
+            id="delay-max"
+            type="number"
+            [(ngModel)]="tempDelayMax"
+            min="0"
+            step="50"
+            class="delay-input"
+            [disabled]="!mockEnabled()"
+          />
+        </div>
+        <button
+          class="btn btn-success"
+          (click)="applyDelayConfig()"
+          [disabled]="isLoading() || !mockEnabled()"
+        >
+          ✓ Zastosuj
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  <div class="clients-grid">
+    @for (client of clients(); track client.id) {
+    <div
+      class="client-card"
+      [class.selected]="isClientSelected(client.id)"
+      (click)="selectClient(client.id)"
+      [class.disabled]="isLoading()"
+    >
+      <div class="client-header">
+        <h2>{{ client.firstName }} {{ client.lastName }}</h2>
+      </div>
+      <p class="client-description">{{ client.description }}</p>
+      <div class="client-stats">
+        <div class="stat">
+          <span class="stat-label">Polisy:</span>
+          <span class="stat-value">{{ client.policies.length }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Oferty:</span>
+          <span class="stat-value">{{ client.offers.length }}</span>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>

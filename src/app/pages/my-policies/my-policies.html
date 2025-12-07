@@ -1,0 +1,39 @@
+<div class="policies-container">
+  @if (selectedClient(); as client) {
+  <h2>Polisy klienta: {{ client.firstName }} {{ client.lastName }}</h2>
+
+  @if (client.policies.length > 0) {
+  <div class="policies-list">
+    @for (policy of client.policies; track policy.id) {
+    <div class="policy-card">
+      <div class="policy-header">
+        <h3>{{ policy.type }}</h3>
+        <span
+          class="policy-status"
+          [class]="'status-' + policy.status.toLowerCase()"
+        >
+          {{ policy.status }}
+        </span>
+      </div>
+      <div class="policy-details">
+        <p><strong>Numer polisy:</strong> {{ policy.policyNumber }}</p>
+        <p><strong>Data rozpoczęcia:</strong> {{ policy.startDate }}</p>
+        <p><strong>Data zakończenia:</strong> {{ policy.endDate }}</p>
+        <p><strong>Składka:</strong> {{ policy.premium }} zł</p>
+      </div>
+    </div>
+    }
+  </div>
+  } @else {
+  <p class="no-data">Brak polis dla tego klienta.</p>
+  } } @else {
+  <div class="no-selection-container">
+    <p class="no-selection">
+      Nie wybrano klienta. Proszę wrócić do strony wyboru klienta.
+    </p>
+    <button class="btn-choose-client" (click)="goToChooseClient()">
+      👤 Wybierz klienta
+    </button>
+  </div>
+  }
+</div>
